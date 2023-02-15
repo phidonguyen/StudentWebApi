@@ -1,0 +1,8 @@
+StudentSystem.DataAccess/obj/
+StudentSystem.Web.Test/bin/
+StudentSystem.Web.Test/obj/
+StudentSystem.Web/bin/
+StudentSystem.Web/obj/
+SystemTech.Core/obj/
+.idea/
+StudentSystem.DataAccess/bin/
