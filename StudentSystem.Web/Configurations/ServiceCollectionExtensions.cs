@@ -1,4 +1,4 @@
-using SystemTech.Core.HelperService.Auth;
+using SystemTech.Core.JwtManager;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;

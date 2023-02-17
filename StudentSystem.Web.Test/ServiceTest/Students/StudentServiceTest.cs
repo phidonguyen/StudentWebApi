@@ -63,10 +63,10 @@ namespace StudentSystem.Web.Test.ServicesTest.Students
             });
 
             // Action
-            StudentAddServiceResponse response = await _studentService.Add(studentAddServiceRequest);
+            StudentAddServiceResponse studentAddServiceResponse = await _studentService.Add(studentAddServiceRequest);
 
             // Assert
-            Assert.NotEmpty(response.Result.Id);
+            Assert.NotEmpty(studentAddServiceResponse.Result.Id);
         }
 
         [Fact]
@@ -80,10 +80,10 @@ namespace StudentSystem.Web.Test.ServicesTest.Students
                 });
 
             // Action
-            StudentGetByIdServiceResponse response = await _studentService.GetById(studentGetByIdServiceRequest);
+            StudentGetByIdServiceResponse studentGetByIdServiceResponse = await _studentService.GetById(studentGetByIdServiceRequest);
 
             // Assert
-            Assert.NotEmpty(response.ErrorMessages);
+            Assert.NotEmpty(studentGetByIdServiceResponse.ErrorMessages);
         }
     }
 }

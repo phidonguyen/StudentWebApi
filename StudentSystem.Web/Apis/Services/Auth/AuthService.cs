@@ -11,7 +11,8 @@ using StudentSystem.Web.Common.Constants;
 using StudentSystem.Web.Common.Helpers;
 using StudentSystem.Web.Common.Messages;
 using StudentSystem.Web.Configurations;
-using SystemTech.Core.HelperService.Auth;
+using SystemTech.Core.Exceptions;
+using SystemTech.Core.JwtManager;
 using SystemTech.Core.Messages;
 using SystemTech.Core.Utils;
 
@@ -53,8 +54,12 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 User user = await DbContext.Users.FirstOrDefaultAsync(_ => _.Email == authLoginServiceFields.Email);
 
                 if (user == null)
-                    throw new ArgumentException(CommonMessages.PropertyNotExist(PropertyName.User.Id));
-                
+                {
+                    authLoginServiceResponse.AddException(
+                        new RecordNotFoundException(CommonMessages.PropertyNotExist(PropertyName.User.Id)));
+                    return authLoginServiceResponse;
+                }
+
                 await ValidateLoggedUser(user, authLoginServiceFields);
 
                 var token = CreateTokenForUser(user);
@@ -97,7 +102,11 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 DateTime now = DateTime.Now;
 
                 if (token == null || token.RefreshTokenExpired <= now)
-                    throw new AuthenticationException("Refresh token expired.");
+                {
+                    var message = "Refresh token expired.";
+                    authRefreshTokenServiceResponse.AddException(new AuthenticationException(message);
+                    return authRefreshTokenServiceResponse;
+                }
 
                 User user = AuthHelpers.ExtractCurrentUser(claimsPrincipal);
                 ClaimsIdentity claimsIdentity = AuthHelpers.ArchiveCurrentUser(user);

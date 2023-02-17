@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace SystemTech.Core.HelperService.Auth
+namespace SystemTech.Core.JwtManager
 {
     public interface IJwtManagerService
     {

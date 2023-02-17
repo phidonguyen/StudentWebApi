@@ -2,8 +2,8 @@ namespace StudentSystem.Web.Common.Messages
 {
     public class CommonMessages
     {
-        public static string PropertyRequired(string propertyName) => $"{propertyName} not empty.";
-        public static string PropertyNotExist(string propertyName) => $"{propertyName} not found.";
+        public static string PropertyRequired(string propertyName) => $"{propertyName} is not empty.";
+        public static string PropertyNotExist(string propertyName) => $"{propertyName} is not found.";
         public static string PropertyIsDuplicate(string propertyName) => $"{propertyName} duplicated.";
         public static string PropertyNoRight(string propertyName) => $"No permission to work with {propertyName}.";
         public static string PropertyWrongFormat(string propertyName, string format) => $"{propertyName} incorrect format. The format should be: {format}.";

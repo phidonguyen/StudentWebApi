@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using StudentSystem.DataAccess.EntityFramework;
 using StudentSystem.DataAccess.EntityFramework.Entities;
 using StudentSystem.Web.Base.Services;
+using StudentSystem.Web.Common.Messages;
 using SystemTech.Core.Exceptions;
 using SystemTech.Core.Messages;
 using SystemTech.Core.Utils;
@@ -59,8 +60,9 @@ namespace StudentSystem.Web.Apis.Services.Students
 
                 if (studentDb == null)
                 {
-                    var message = "Student is not found.";
-                    studentGetByIdServiceResponse.AddException(new RecordNotFoundException(message));
+                    var message = $"Student [{studentGetByIdServiceFields.Id}] is not found.";
+                    studentGetByIdServiceResponse.AddException(
+                        new RecordNotFoundException(message));
                     return studentGetByIdServiceResponse;
                 }
 
@@ -116,7 +118,7 @@ namespace StudentSystem.Web.Apis.Services.Students
                 var studentDb = await DbContext.Students.FirstOrDefaultAsync(_ => _.Id == student.Id);
                 if (studentDb == null)
                 {
-                    var message = "Student is not found.";
+                    var message = $"Student [{studentUpdateServiceFields.Id}] is not found.";
                     studentUpdateServiceResponse.AddException(new RecordNotFoundException(message));
                     return studentUpdateServiceResponse;
                 }
@@ -152,7 +154,7 @@ namespace StudentSystem.Web.Apis.Services.Students
 
                 if (studentDb == null)
                 {
-                    var message = "Student is not found.";
+                    var message = $"Student [{studentRemoveServiceFields.Id}] is not found.";
                     studentRemoveServiceResponse.AddException(new RecordNotFoundException(message));
                     return studentRemoveServiceResponse;
                 }

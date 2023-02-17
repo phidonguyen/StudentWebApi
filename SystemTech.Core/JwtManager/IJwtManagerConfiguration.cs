@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 
-namespace SystemTech.Core.HelperService.Auth
+namespace SystemTech.Core.JwtManager
 {
     public interface IJwtManagerConfiguration
     {

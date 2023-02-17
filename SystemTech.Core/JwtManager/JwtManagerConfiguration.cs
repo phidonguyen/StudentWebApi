@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using SystemTech.Core.Common;
 
-namespace SystemTech.Core.HelperService.Auth
+namespace SystemTech.Core.JwtManager
 {
     public class JwtManagerConfiguration : IJwtManagerConfiguration
     {
