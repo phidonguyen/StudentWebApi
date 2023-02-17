@@ -1,3 +1,4 @@
+using System.Security.Authentication;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
@@ -58,7 +59,9 @@ namespace StudentSystem.Web.Base.Controllers
 
                 return BadRequest(ModelState);
             }
-            if (type == typeof(RecordNotFoundException) || type == typeof(ErrorsTrackingException))
+            
+            if (type == typeof(RecordNotFoundException) || type == typeof(ErrorsTrackingException) 
+                                                        || type == typeof(ArgumentException))
             {
                 return NotFound(new { errors = exception.Message });
             }
@@ -68,6 +71,11 @@ namespace StudentSystem.Web.Base.Controllers
                 return NoContent();
             }
 
+            if (type == typeof(AuthenticationException))
+            {
+                return BadRequest(new { errors = exception.Message });
+            }
+            
             // Server
             // LogSystemRaven.WriteLogRaven(exception);
             throw exception; // throw exception to outside for catching 's global -> ServerErrorHandling

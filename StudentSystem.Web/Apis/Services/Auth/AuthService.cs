@@ -60,8 +60,10 @@ namespace StudentSystem.Web.Apis.Services.Auth
                     return authLoginServiceResponse;
                 }
 
-                await ValidateLoggedUser(user, authLoginServiceFields);
-
+                await ValidateLoggedUser(user, authLoginServiceFields, authLoginServiceResponse);
+                if (authLoginServiceResponse.HasErrors())
+                    return authLoginServiceResponse;
+                
                 var token = CreateTokenForUser(user);
                 
                 await DbContext.SaveChangesAsync();
@@ -104,7 +106,7 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 if (token == null || token.RefreshTokenExpired <= now)
                 {
                     var message = "Refresh token expired.";
-                    authRefreshTokenServiceResponse.AddException(new AuthenticationException(message);
+                    authRefreshTokenServiceResponse.AddException(new AuthenticationException(message));
                     return authRefreshTokenServiceResponse;
                 }
 
@@ -134,24 +136,28 @@ namespace StudentSystem.Web.Apis.Services.Auth
 
         #region Helper
 
-        private async Task ValidateLoggedUser(User userDb, AuthLoginServiceFields authLoginServiceFields)
+        private async Task ValidateLoggedUser(User userDb, AuthLoginServiceFields authLoginServiceFields,
+            AuthLoginServiceResponse authLoginServiceResponse)
         {
             if (userDb.Status is (int)UserStatusEnum.Banned)
-                throw new UnauthorizedAccessException("Your account is locked. Contact admin.");
-            
+            {
+                string message = "Your account is locked. Contact admin.";
+                authLoginServiceResponse.AddException(new UnauthorizedAccessException(message));   
+            }
+
             if (!CryptoHelpers.VerifyPassword(authLoginServiceFields.Password, userDb.Password))
             {
                 var numberLoginAttempt = await LoginFailedHandler(userDb);
                 int remainingAttemptTimes = GeneralConstants.MaxLoginAttempt - numberLoginAttempt;
-                string msg = "The password is incorrect.";
+                string message = "The password is incorrect.";
 
                 if (numberLoginAttempt > 0 && remainingAttemptTimes > 0)
-                    msg = $"The password is incorrect. You have {remainingAttemptTimes} attempts remaining.";
+                    message = $"The password is incorrect. You have {remainingAttemptTimes} attempts remaining.";
                 
                 if (numberLoginAttempt > 0 && remainingAttemptTimes == 0)
-                    msg = "Your account is locked.";
+                    message = "Your account is locked.";
 
-                throw new AuthenticationException(msg);
+                authLoginServiceResponse.AddException(new AuthenticationException(message));
             }
         }
 
@@ -165,23 +171,23 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 UserId = user.Id,
                 IsSuccess = false
             };
-            _ = DbContext.Add(historyLogin);
+            DbContext.Add(historyLogin);
             await DbContext.SaveChangesAsync();
 
             // checking user login attempt
-            var loginAttempts = await DbContext.HistoryLogins
+            var loginAttempts = DbContext.HistoryLogins
                 .Where(_ => _.UserId == user.Id)
                 .OrderByDescending(_ => _.CreatedDate)
-                .Take(GeneralConstants.MaxLoginAttempt)
-                .AsNoTracking()
-                .ToListAsync();
+                .AsEnumerable()
+                .TakeWhile(_ => !_.IsSuccess)
+                .Take(GeneralConstants.MaxLoginAttempt);
 
-            int numberLoginAttempt = loginAttempts.FindIndex(_ => !_.IsSuccess);
+            int numberLoginAttempt = loginAttempts.Count();
 
             if (numberLoginAttempt == GeneralConstants.MaxLoginAttempt)
             {
                 user.Status = (int)UserStatusEnum.Banned;
-                _ = DbContext.Update(user);
+                DbContext.Update(user);
             }
 
             return numberLoginAttempt;
@@ -212,7 +218,7 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 TokenId = tokenEntry.Entity.Id,
                 IsSuccess = true
             };
-            _ = DbContext.Add(historyLogin);
+            DbContext.Add(historyLogin);
 
             return tokenEntry.Entity;
         }

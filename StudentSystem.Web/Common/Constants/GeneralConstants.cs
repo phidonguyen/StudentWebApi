@@ -2,6 +2,6 @@ namespace StudentSystem.Web.Common.Constants
 {
     public class GeneralConstants
     {
-        public const int MaxLoginAttempt = 20;
+        public const int MaxLoginAttempt = 5;
     }
 }
