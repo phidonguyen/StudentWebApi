@@ -15,9 +15,9 @@
         public int Status { get; set; }
         public bool IsDeleted { get; set; }
         public string CreatedBy { get; set; }
-        public DateTime? CreatedDate { get; set; }
+        public DateTime CreatedDate { get; set; }
         public string UpdatedBy { get; set; }
-        public DateTime? UpdatedDate { get; set; }
+        public DateTime UpdatedDate { get; set; }
         public virtual ICollection<Token> Tokens { get; set; }
         public virtual ICollection<HistoryLogin> HistoryLogins { get; set; }
     }

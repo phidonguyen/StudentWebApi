@@ -9,7 +9,6 @@ using StudentSystem.DataAccess.EntityFramework.Entities;
 using StudentSystem.Web.Base.Services;
 using StudentSystem.Web.Common.Constants;
 using StudentSystem.Web.Common.Helpers;
-using StudentSystem.Web.Common.Messages;
 using StudentSystem.Web.Configurations;
 using SystemTech.Core.Exceptions;
 using SystemTech.Core.JwtManager;
@@ -52,11 +51,10 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 AuthLoginServiceFields authLoginServiceFields = authLoginServiceRequest.Fields;
                 
                 User user = await DbContext.Users.FirstOrDefaultAsync(_ => _.Email == authLoginServiceFields.Email);
-
                 if (user == null)
                 {
                     authLoginServiceResponse.AddException(
-                        new RecordNotFoundException(CommonMessages.PropertyNotExist(PropertyName.User.Id)));
+                        new RecordNotFoundException($"Email [{authLoginServiceFields.Email}] does not exist."));
                     return authLoginServiceResponse;
                 }
 
@@ -64,9 +62,7 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 if (authLoginServiceResponse.HasErrors())
                     return authLoginServiceResponse;
                 
-                var token = CreateTokenForUser(user);
-                
-                await DbContext.SaveChangesAsync();
+                var token = await CreateTokenForUser(user);
                 
                 // merging
                 _merger.MergeData(authLoginServiceResponse, token);
@@ -95,15 +91,11 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 ClaimsPrincipal claimsPrincipal = _jwtManagerService.GetPrincipalFromExpiredToken(authRefreshTokenServiceFields.AccessToken);
                 string userId = claimsPrincipal.GetCurrentUserId();
 
-                Token token = await DbContext.Tokens.Where(_ =>
+                Token token = await DbContext.Tokens.FirstOrDefaultAsync(_ =>
                         _.RefreshToken == authRefreshTokenServiceFields.RefreshToken &&
-                        _.UserId == userId)
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync();
-
-                DateTime now = DateTime.Now;
-
-                if (token == null || token.RefreshTokenExpired <= now)
+                        _.UserId == userId);
+                
+                if (token == null || token.RefreshTokenExpired <= DateTime.Now)
                 {
                     var message = "Refresh token expired.";
                     authRefreshTokenServiceResponse.AddException(new AuthenticationException(message));
@@ -139,7 +131,7 @@ namespace StudentSystem.Web.Apis.Services.Auth
         private async Task ValidateLoggedUser(User userDb, AuthLoginServiceFields authLoginServiceFields,
             AuthLoginServiceResponse authLoginServiceResponse)
         {
-            if (userDb.Status is (int)UserStatusEnum.Banned)
+            if (userDb.Status == (int)UserStatusEnum.Banned)
             {
                 string message = "Your account is locked. Contact admin.";
                 authLoginServiceResponse.AddException(new UnauthorizedAccessException(message));   
@@ -193,11 +185,12 @@ namespace StudentSystem.Web.Apis.Services.Auth
             return numberLoginAttempt;
         }
 
-        private Token CreateTokenForUser(User user)
+        private async Task<Token> CreateTokenForUser(User user)
         {
             ClaimsIdentity claimsIdentity = AuthHelpers.ArchiveCurrentUser(user);
             string accessToken = _jwtManagerService.GenerateAccessToken(claimsIdentity);
             string refreshToken = _jwtManagerService.GenerateRefreshToken();
+            
             Token token = new()
             {
                 UserId = user.Id,
@@ -206,7 +199,6 @@ namespace StudentSystem.Web.Apis.Services.Auth
                 RefreshToken = refreshToken,
                 RefreshTokenExpired = DateTime.Now.AddMinutes(_refreshTokenExpiryDuration)
             };
-
             var tokenEntry = DbContext.Add(token);
 
             // tracking login
@@ -220,6 +212,7 @@ namespace StudentSystem.Web.Apis.Services.Auth
             };
             DbContext.Add(historyLogin);
 
+            await DbContext.SaveChangesAsync();
             return tokenEntry.Entity;
         }
 
